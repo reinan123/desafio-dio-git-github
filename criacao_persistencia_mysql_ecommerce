@@ -1,0 +1,118 @@
+use E-commerce;
+
+create table cliente(
+	idCliente int primary key auto_increment,
+    nome_cliente varchar(50),
+    sobrenome_cliente varchar(50),
+    cpf varchar(20) unique,
+    bairro varchar(20),
+    rua_quadra varchar(20),
+    cidade varchar(20),
+    cep varchar(10),
+    tipo_pf_pj char(2)
+    
+);
+
+select * from cliente;
+
+alter table cliente add dtNascimento date;
+
+create table pedido (
+	idPedido int primary key auto_increment,
+    status_pedido enum('Processando', 'Enviado', 'Entregue') default 'Processando',
+    descricao_pedido varchar(100),
+    frete float default 20,
+    pedido_idCliente int,
+    constraint fk_cliente foreign key (pedido_idCliente) references cliente(idCliente)
+		on update cascade
+    );
+
+
+create table produto(
+	idProduto int primary key auto_increment,
+    categoria_produto varchar(45),
+    nome_produto varchar(50)
+);
+
+create table estoque(
+	idEstoque int primary key auto_increment,
+    local_estoque varchar(255),
+    quantidade int default 0
+);
+
+
+create table produto_pedido(
+	idPedido_produto_pedido int,
+    idProduto_produto_pedido int,
+    quantidade int default 1,
+    primary key (idPedido_produto_pedido, idProduto_produto_pedido),
+    constraint fk_produto_produto_produto foreign key (idProduto_produto_pedido) references produto(idProduto),
+    constraint fk_produto_pedido_pedido foreign key (idPedido_produto_pedido) references pedido(idPedido)
+    
+);
+
+-- ***************************************************_**_*********************************************
+
+insert into cliente (nome_cliente, sobrenome_cliente, cpf, bairro, rua_quadra, cidade, cep, tipo_pf_pj, dtNascimento)
+	values ('Reinan', 'Rodrigues', '04317985160', 'Riacho Fundo 2', 'QN23 cnj 02', 'Brasília', '71881-789', 'pf', '1993-07-31'),
+		   ('Lucas', 'Lima', '04317985161', 'Riacho Fundo 1', 'QN24 cnj 02', 'Brasília', '71881-789', 'pf', '1994-07-31'),
+           ('RR', 'Soluções', '04317985162','Recanto das emas', 'QN24 cnj 02', 'Brasília', '71881-730', 'pj', '1998-07-31'),
+           ('Stark', 'Educação', '04317985163','Recanto das emas', 'QN24 cnj 02', 'Brasília', '71881-730', 'pj', '1993-08-30');
+           
+select * from cliente;
+desc cliente;
+
+SET FOREIGN_KEY_CHECKS = 0;
+truncate table cliente;
+
+insert into pedido (status_pedido, descricao_pedido, frete, pedido_idCliente)
+	values('Processando', 'celular iphone 14', 45.50, 1),
+		  ('Processando', 'bicicleta', 150, 2),
+          ('Enviado', 'TV 40 polegadas', 19.50, 3),
+          ('Entregue', 'notebook', 45.50, 1);
+          
+select * from pedido;
+insert into produto(categoria_produto, nome_produto)
+	values('Eletrônico', 'celular'),
+		  ('Veículo', 'bicicleta'),
+          ('Eletrônico', 'TV'),
+          ('Eletrônico', 'Notebook');
+select * from produto;
+
+insert into estoque (local_estoque, quantidade)
+	values('Brasília', 250),
+    ('São Paulo', 200);
+
+insert into produto_pedido(quantidade, idProduto_produto_pedido, idPedido_produto_pedido)
+	values(1, 1, 1),
+    (1, 2 ,2),
+    (1, 3, 3),
+    (1, 4, 4);
+
+select * from produto_pedido;
+
+select concat(nome_cliente, ' ', sobrenome_cliente) as nome_completo, cpf, cidade, status_pedido, descricao_pedido, frete from cliente, pedido
+	where idCliente = pedido_idCliente
+    order by frete desc;
+
+select concat(nome_cliente, ' ', sobrenome_cliente) as nome_completo, cpf, cidade, status_pedido, descricao_pedido, frete, 
+count(nome_cliente) as qtd_de_compras from cliente, pedido
+	where idCliente = pedido_idCliente
+    group by nome_completo;
+    
+select concat(nome_cliente, ' ', sobrenome_cliente) as nome_completo, cpf, cidade, 
+count(nome_cliente) as qtd_de_compras from cliente, pedido
+	where idCliente = pedido_idCliente
+    group by nome_completo
+    having qtd_de_compras >=2;
+
+-- recupera todos os dados das duas tabelas, mesmo os nulls
+select * from cliente left outer join pedido on idCliente = pedido_idCliente;
+
+-- recupera só os dados que são matchs nas duas tabelas
+select * from cliente inner join pedido on idCliente = pedido_idCliente
+		inner join produto_pedido pp on pp.idPedido_produto_pedido = idPedido;
+        
+select *, count(*) as total from cliente inner join pedido on idCliente = pedido_idCliente
+		inner join produto_pedido pp on pp.idPedido_produto_pedido = idPedido
+		group by idCliente;
